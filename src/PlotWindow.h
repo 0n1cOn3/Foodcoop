@@ -10,6 +10,8 @@
 #include <QDateEdit>
 #include <QTabWidget>
 #include <QTableWidget>
+#include <QLineEdit>
+#include <QPushButton>
 
 QT_BEGIN_NAMESPACE
 class QTimer;
@@ -29,7 +31,13 @@ public slots:
     void onCategoryChanged(const QString &category);
     void onFetchStarted();
     void onFetchFinished();
+    void onIssueOccurred(const IssueEntry &issue);
     void onFromDateChanged(const QDate &date);
+    void updateIssues();
+    void showFullLog();
+
+signals:
+    void addItemRequested(const QString &item);
 
 private:
     DatabaseManager *m_db;
@@ -37,6 +45,7 @@ private:
     QChartView *m_chartView;
     QLineSeries *m_series;
     QTableWidget *m_table;
+    QTableWidget *m_issueTable;
     QTabWidget *m_tabs;
     QTimer *m_timer;
     QDockWidget *m_menuDock;
@@ -45,6 +54,9 @@ private:
     QLabel *m_browserStatusLabel;
     QComboBox *m_storeCombo;
     QComboBox *m_categoryCombo;
+    QLineEdit *m_newItemEdit;
+    QPushButton *m_addItemButton;
+    QPushButton *m_showLogButton;
     QDateEdit *m_fromDateEdit;
     QString m_currentStore;
     QString m_currentCategory;
