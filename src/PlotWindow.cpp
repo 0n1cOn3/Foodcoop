@@ -6,7 +6,6 @@
 #include <QVBoxLayout>
 #include <QDebug>
 
-using namespace QtCharts;
 
 PlotWindow::PlotWindow(DatabaseManager *db, QWidget *parent)
     : QMainWindow(parent), m_db(db)

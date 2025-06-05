@@ -1,7 +1,7 @@
 #pragma once
 #include <QMainWindow>
-#include <QChartView>
-#include <QLineSeries>
+#include <QtCharts/QChartView>
+#include <QtCharts/QLineSeries>
 #include "DatabaseManager.h"
 #include "TrendDetector.h"
 
@@ -21,7 +21,7 @@ private slots:
 private:
     DatabaseManager *m_db;
     TrendDetector m_detector;
-    QtCharts::QChartView *m_chartView;
-    QtCharts::QLineSeries *m_series;
+    QChartView *m_chartView;
+    QLineSeries *m_series;
     QTimer *m_timer;
 };
