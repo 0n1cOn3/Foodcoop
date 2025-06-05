@@ -15,7 +15,7 @@ PriceFetcher::PriceFetcher(DatabaseManager *db, QObject *parent)
     // then scrape its price.
     m_stores = {
         {"Coop",
-         "https://www.coop.ch/de/search/?text=%1",
+         "https://www.coop.ch/en/search/?text=%1",
          QRegularExpression(R"(href=\"([^\"]+/p/\d+)\")"),
          QRegularExpression(R"(price[^0-9]*([0-9]+\.[0-9]{2}))")},
         {"Migros",
@@ -130,6 +130,19 @@ void PriceFetcher::onReply(QNetworkReply *reply)
         }
         reply->deleteLater();
         return;
+
+    } else {
+        const QByteArray data = reply->readAll();
+        QString pattern = reply->property("regex").toString();
+        QRegularExpression regex(pattern);
+        QRegularExpressionMatch match = regex.match(QString::fromUtf8(data));
+        if (match.hasMatch()) {
+            entry.price = match.captured(1).toDouble();
+            emit priceFetched(entry);
+        } else {
+            issue.error = QStringLiteral("Price not found");
+            emit issueOccurred(issue);
+        }
     }
 
     QByteArray data = reply->readAll();
