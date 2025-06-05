@@ -34,6 +34,7 @@ public slots:
     void onIssueOccurred(const IssueEntry &issue);
     void onFromDateChanged(const QDate &date);
     void updateIssues();
+    void showFullLog();
 
 signals:
     void addItemRequested(const QString &item);
@@ -55,6 +56,7 @@ private:
     QComboBox *m_categoryCombo;
     QLineEdit *m_newItemEdit;
     QPushButton *m_addItemButton;
+    QPushButton *m_showLogButton;
     QDateEdit *m_fromDateEdit;
     QString m_currentStore;
     QString m_currentCategory;

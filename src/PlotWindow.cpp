@@ -15,6 +15,9 @@
 #include <QLineEdit>
 #include <QPushButton>
 #include <QHBoxLayout>
+#include <QDialog>
+#include <QPlainTextEdit>
+
 
 
 PlotWindow::PlotWindow(DatabaseManager *db, QWidget *parent)
@@ -33,6 +36,19 @@ PlotWindow::PlotWindow(DatabaseManager *db, QWidget *parent)
     m_issueTable->setColumnCount(4);
     m_issueTable->setHorizontalHeaderLabels({tr("Store"), tr("Item"), tr("Date"), tr("Error")});
 
+    QWidget *issueTab = new QWidget(this);
+    QVBoxLayout *issueLayout = new QVBoxLayout(issueTab);
+    issueLayout->addWidget(m_issueTable);
+    m_showLogButton = new QPushButton(tr("Show Full Log"), issueTab);
+    issueLayout->addWidget(m_showLogButton);
+    issueTab->setLayout(issueLayout);
+
+    connect(m_showLogButton, &QPushButton::clicked, this, &PlotWindow::showFullLog);
+
+    m_tabs = new QTabWidget(this);
+    m_tabs->addTab(m_chartView, tr("Chart"));
+    m_tabs->addTab(m_table, tr("Table"));
+    m_tabs->addTab(issueTab, tr("Issues"));
     m_tabs = new QTabWidget(this);
     m_tabs->addTab(m_chartView, tr("Chart"));
     m_tabs->addTab(m_table, tr("Table"));
@@ -205,4 +221,25 @@ void PlotWindow::setCategoryList(const QStringList &categories)
     m_categoryCombo->addItems(categories);
     m_currentCategory = m_categoryCombo->currentText();
     updateChart();
+}
+
+void PlotWindow::showFullLog()
+{
+    QList<IssueEntry> issues = m_db->loadIssues();
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Full Issue Log"));
+    QVBoxLayout *layout = new QVBoxLayout(&dialog);
+    QPlainTextEdit *edit = new QPlainTextEdit(&dialog);
+    edit->setReadOnly(true);
+    for (const IssueEntry &iss : issues) {
+        edit->appendPlainText(QString("%1|%2|%3|%4")
+                                  .arg(iss.store)
+                                  .arg(iss.item)
+                                  .arg(iss.date.toString(Qt::ISODate))
+                                  .arg(iss.error));
+    }
+    layout->addWidget(edit);
+    dialog.setLayout(layout);
+    dialog.resize(500, 400);
+    dialog.exec();
 }
