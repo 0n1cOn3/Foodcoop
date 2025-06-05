@@ -2,6 +2,7 @@
 #include <QObject>
 #include <QSqlDatabase>
 #include "PriceFetcher.h"
+#include <QStringList>
 
 class DatabaseManager : public QObject
 {
@@ -18,6 +19,10 @@ public:
                                  const QDate &fromDate = QDate()) const;
     PriceEntry latestPrice(const QString &item, const QString &store) const;
     bool hasPrices() const;
+    void ensureProduct(const QString &store, const QString &item);
+    void setProductUrl(const QString &store, const QString &item, const QString &url);
+    QString productUrl(const QString &store, const QString &item) const;
+    QStringList loadItems() const;
 
 private:
     QSqlDatabase m_db;

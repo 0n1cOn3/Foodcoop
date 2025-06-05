@@ -12,6 +12,9 @@
 #include <QDateEdit>
 #include <QTabWidget>
 #include <QTableWidget>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QHBoxLayout>
 
 
 PlotWindow::PlotWindow(DatabaseManager *db, QWidget *parent)
@@ -59,6 +62,17 @@ PlotWindow::PlotWindow(DatabaseManager *db, QWidget *parent)
     dockLayout->addWidget(m_categoryCombo);
     connect(m_categoryCombo, &QComboBox::currentTextChanged, this, &PlotWindow::onCategoryChanged);
 
+    QHBoxLayout *addLayout = new QHBoxLayout();
+    m_newItemEdit = new QLineEdit(dockWidget);
+    m_addItemButton = new QPushButton(tr("Add"), dockWidget);
+    addLayout->addWidget(m_newItemEdit);
+    addLayout->addWidget(m_addItemButton);
+    dockLayout->addLayout(addLayout);
+    connect(m_addItemButton, &QPushButton::clicked, this, [this]() {
+        emit addItemRequested(m_newItemEdit->text());
+        m_newItemEdit->clear();
+    });
+
     dockLayout->addWidget(new QLabel(tr("From:"), dockWidget));
     m_fromDateEdit = new QDateEdit(QDate::currentDate().addDays(-30), dockWidget);
     m_fromDateEdit->setCalendarPopup(true);
@@ -99,13 +113,14 @@ void PlotWindow::updateChart()
     m_table->setRowCount(prices.size());
     for (int i = 0; i < prices.size(); ++i) {
         m_table->setItem(i, 0, new QTableWidgetItem(prices[i].date.toString(Qt::ISODate)));
-        m_table->setItem(i, 1, new QTableWidgetItem(QString::number(prices[i].price)));
+        m_table->setItem(i, 1, new QTableWidgetItem(QString("%1 %2").arg(prices[i].price).arg(prices[i].currency)));
     }
 
     PriceEntry latest = m_db->latestPrice(m_currentCategory, m_currentStore);
     if (latest.date.isValid())
-        m_currentPriceLabel->setText(tr("Current price: %1 (%2)")
+        m_currentPriceLabel->setText(tr("Current price: %1 %2 (%3)")
                                         .arg(latest.price)
+                                        .arg(latest.currency)
                                         .arg(latest.date.toString(Qt::ISODate)));
     else
         m_currentPriceLabel->setText(tr("Current price: N/A"));
@@ -168,8 +183,9 @@ void PlotWindow::updateDbInfo()
     m_dbSizeLabel->setText(tr("Database size: %1 KB").arg(info.size() / 1024));
     PriceEntry latest = m_db->latestPrice(m_currentCategory, m_currentStore);
     if (latest.date.isValid())
-        m_currentPriceLabel->setText(tr("Current price: %1 (%2)")
+        m_currentPriceLabel->setText(tr("Current price: %1 %2 (%3)")
                                         .arg(latest.price)
+                                        .arg(latest.currency)
                                         .arg(latest.date.toString(Qt::ISODate)));
     else
         m_currentPriceLabel->setText(tr("Current price: N/A"));
