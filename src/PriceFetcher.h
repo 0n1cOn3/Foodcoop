@@ -5,12 +5,20 @@
 #include <QList>
 #include <QUrl>
 #include <QRegularExpression>
+#include <QDate>
 
 struct PriceEntry {
     QString store;
     QString item;
     QDate date;
     double price;
+};
+
+struct IssueEntry {
+    QString store;
+    QString item;
+    QDate date;
+    QString error;
 };
 
 class PriceFetcher : public QObject
@@ -24,6 +32,7 @@ public:
 
 signals:
     void priceFetched(const PriceEntry &entry);
+    void issueOccurred(const IssueEntry &issue);
     void fetchFinished();
     void fetchStarted();
 

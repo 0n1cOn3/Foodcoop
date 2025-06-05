@@ -26,9 +26,14 @@ PlotWindow::PlotWindow(DatabaseManager *db, QWidget *parent)
     m_table->setColumnCount(2);
     m_table->setHorizontalHeaderLabels({tr("Date"), tr("Price")});
 
+    m_issueTable = new QTableWidget(this);
+    m_issueTable->setColumnCount(4);
+    m_issueTable->setHorizontalHeaderLabels({tr("Store"), tr("Item"), tr("Date"), tr("Error")});
+
     m_tabs = new QTabWidget(this);
     m_tabs->addTab(m_chartView, tr("Chart"));
     m_tabs->addTab(m_table, tr("Table"));
+    m_tabs->addTab(m_issueTable, tr("Issues"));
     setCentralWidget(m_tabs);
 
     // Create user menu dock
@@ -70,6 +75,7 @@ PlotWindow::PlotWindow(DatabaseManager *db, QWidget *parent)
     m_currentStore = m_storeCombo->currentText();
     m_currentCategory = m_categoryCombo->currentText();
     updateDbInfo();
+    updateIssues();
 
     m_timer = new QTimer(this);
     connect(m_timer, &QTimer::timeout, this, &PlotWindow::updateChart);
@@ -126,11 +132,34 @@ void PlotWindow::onFetchFinished()
 {
     m_browserStatusLabel->setText(tr("Browser: Idle"));
     updateDbInfo();
+    updateIssues();
 }
 
 void PlotWindow::onFromDateChanged(const QDate &)
 {
     updateChart();
+}
+
+void PlotWindow::onIssueOccurred(const IssueEntry &issue)
+{
+    int row = m_issueTable->rowCount();
+    m_issueTable->insertRow(row);
+    m_issueTable->setItem(row, 0, new QTableWidgetItem(issue.store));
+    m_issueTable->setItem(row, 1, new QTableWidgetItem(issue.item));
+    m_issueTable->setItem(row, 2, new QTableWidgetItem(issue.date.toString(Qt::ISODate)));
+    m_issueTable->setItem(row, 3, new QTableWidgetItem(issue.error));
+}
+
+void PlotWindow::updateIssues()
+{
+    QList<IssueEntry> issues = m_db->loadIssues();
+    m_issueTable->setRowCount(issues.size());
+    for (int i = 0; i < issues.size(); ++i) {
+        m_issueTable->setItem(i, 0, new QTableWidgetItem(issues[i].store));
+        m_issueTable->setItem(i, 1, new QTableWidgetItem(issues[i].item));
+        m_issueTable->setItem(i, 2, new QTableWidgetItem(issues[i].date.toString(Qt::ISODate)));
+        m_issueTable->setItem(i, 3, new QTableWidgetItem(issues[i].error));
+    }
 }
 
 void PlotWindow::updateDbInfo()

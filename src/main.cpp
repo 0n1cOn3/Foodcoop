@@ -18,11 +18,17 @@ int main(int argc, char *argv[])
     w.setCategoryList(fetcher.categoryList());
     QObject::connect(&fetcher, &PriceFetcher::priceFetched,
                      [&db](const PriceEntry &entry){ db.insertPrice(entry); });
+    QObject::connect(&fetcher, &PriceFetcher::issueOccurred,
+                     [&db, &w](const IssueEntry &issue){
+                         db.insertIssue(issue);
+                         w.onIssueOccurred(issue);
+                     });
     QObject::connect(&fetcher, &PriceFetcher::fetchStarted,
                      &w, &PlotWindow::onFetchStarted);
     QObject::connect(&fetcher, &PriceFetcher::fetchFinished,
                      &w, &PlotWindow::onFetchFinished);
-    fetcher.fetchDailyPrices();
+    if (!db.hasPrices())
+        fetcher.fetchDailyPrices();
 
     return app.exec();
 }
