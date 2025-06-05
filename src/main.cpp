@@ -7,6 +7,9 @@
 #include <QMessageBox>
 
 static bool performFirstScrape(PriceFetcher &fetcher, DatabaseManager &db, const QStringList &stores)
+
+static bool performFirstScrape(PriceFetcher &fetcher, DatabaseManager &db, const QStringList &stores)
+static bool performFirstScrape(PriceFetcher &fetcher, DatabaseManager &db)
 {
     FirstRunDialog dialog;
     QObject::connect(&fetcher, &PriceFetcher::progressChanged,
@@ -22,6 +25,10 @@ static bool performFirstScrape(PriceFetcher &fetcher, DatabaseManager &db, const
 
     bool firstAttempt = true;
     while (!db.hasPricesForAllStores(stores) && !canceled) {
+    QObject::connect(&dialog, &FirstRunDialog::canceled, [&](){ canceled = true; });
+    dialog.show();
+    while (!db.hasPricesForAllStores(stores) && !canceled) {
+    while (!db.hasPrices() && !canceled) {
         QEventLoop loop;
         QObject::connect(&fetcher, &PriceFetcher::fetchFinished,
                          &loop, &QEventLoop::quit);
@@ -41,6 +48,7 @@ static bool performFirstScrape(PriceFetcher &fetcher, DatabaseManager &db, const
 
     dialog.hide();
     return db.hasPricesForAllStores(stores) && !canceled;
+    return db.hasPrices() && !canceled;
 }
 
 int main(int argc, char *argv[])
@@ -77,10 +85,14 @@ int main(int argc, char *argv[])
     QStringList stores = fetcher.storeList();
     if (!db.hasPricesForAllStores(stores)) {
         if (!performFirstScrape(fetcher, db, stores))
+    if (!db.hasPrices()) {
+        if (!performFirstScrape(fetcher, db))
             return 0;
     }
 
     w.show();
+    if (!db.hasPrices())
+        fetcher.fetchDailyPrices();
 
     return app.exec();
 }
