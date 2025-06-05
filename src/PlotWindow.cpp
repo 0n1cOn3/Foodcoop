@@ -18,8 +18,6 @@
 #include <QDialog>
 #include <QPlainTextEdit>
 
-
-
 PlotWindow::PlotWindow(DatabaseManager *db, QWidget *parent)
     : QMainWindow(parent), m_db(db)
 {
@@ -52,6 +50,10 @@ PlotWindow::PlotWindow(DatabaseManager *db, QWidget *parent)
     m_tabs = new QTabWidget(this);
     m_tabs->addTab(m_chartView, tr("Chart"));
     m_tabs->addTab(m_table, tr("Table"));
+    m_tabs->addTab(issueTab, tr("Issues"));
+    m_tabs = new QTabWidget(this);
+    m_tabs->addTab(m_chartView, tr("Chart"));
+    m_tabs->addTab(m_table, tr("Table"));
     m_tabs->addTab(m_issueTable, tr("Issues"));
     setCentralWidget(m_tabs);
 
@@ -68,7 +70,7 @@ PlotWindow::PlotWindow(DatabaseManager *db, QWidget *parent)
 
     dockLayout->addWidget(new QLabel(tr("Market:"), dockWidget));
     m_storeCombo = new QComboBox(dockWidget);
-    m_storeCombo->addItems({"Coop", "Migros", "Denner", "Aldi Suisse", "Lidl Suisse"});
+    m_storeCombo->addItems({"Coop", "Migros", "Denner", "Aldi Suisse", "Lidl Suisse", "Ottos Warenposten"});
     dockLayout->addWidget(m_storeCombo);
     connect(m_storeCombo, &QComboBox::currentTextChanged, this, &PlotWindow::onStoreChanged);
 

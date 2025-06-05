@@ -19,6 +19,7 @@ public:
                                  const QDate &fromDate = QDate()) const;
     PriceEntry latestPrice(const QString &item, const QString &store) const;
     bool hasPrices() const;
+    bool hasPricesForAllStores(const QStringList &stores) const;
     void ensureProduct(const QString &store, const QString &item);
     void setProductUrl(const QString &store, const QString &item, const QString &url);
     QString productUrl(const QString &store, const QString &item) const;

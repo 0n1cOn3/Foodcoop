@@ -129,6 +129,18 @@ bool DatabaseManager::hasPrices() const
     return false;
 }
 
+bool DatabaseManager::hasPricesForAllStores(const QStringList &stores) const
+{
+    QSqlQuery query;
+    for (const QString &store : stores) {
+        query.prepare("SELECT COUNT(*) FROM prices WHERE store=?");
+        query.addBindValue(store);
+        if (!query.exec() || !query.next() || query.value(0).toInt() == 0)
+            return false;
+    }
+    return true;
+}
+
 void DatabaseManager::ensureProduct(const QString &store, const QString &item)
 {
     QSqlQuery query;

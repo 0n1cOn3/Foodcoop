@@ -5,6 +5,7 @@
 #include "FirstRunDialog.h"
 #include <QEventLoop>
 
+static bool performFirstScrape(PriceFetcher &fetcher, DatabaseManager &db, const QStringList &stores)
 static bool performFirstScrape(PriceFetcher &fetcher, DatabaseManager &db)
 {
     FirstRunDialog dialog;
@@ -18,7 +19,7 @@ static bool performFirstScrape(PriceFetcher &fetcher, DatabaseManager &db)
     bool canceled = false;
     QObject::connect(&dialog, &FirstRunDialog::canceled, [&](){ canceled = true; });
     dialog.show();
-
+    while (!db.hasPricesForAllStores(stores) && !canceled) {
     while (!db.hasPrices() && !canceled) {
         QEventLoop loop;
         QObject::connect(&fetcher, &PriceFetcher::fetchFinished,
@@ -28,6 +29,7 @@ static bool performFirstScrape(PriceFetcher &fetcher, DatabaseManager &db)
     }
 
     dialog.hide();
+    return db.hasPricesForAllStores(stores) && !canceled;
     return db.hasPrices() && !canceled;
 }
 
@@ -62,6 +64,9 @@ int main(int argc, char *argv[])
                          w.setCategoryList(fetcher.categoryList());
                          w.updateChart();
                      });
+    QStringList stores = fetcher.storeList();
+    if (!db.hasPricesForAllStores(stores)) {
+        if (!performFirstScrape(fetcher, db, stores))
     if (!db.hasPrices()) {
         if (!performFirstScrape(fetcher, db))
             return 0;

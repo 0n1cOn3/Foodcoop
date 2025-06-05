@@ -34,6 +34,10 @@ PriceFetcher::PriceFetcher(DatabaseManager *db, QObject *parent)
          "https://www.lidl.ch/sr?query=%1",
          QRegularExpression(R"(href=\"([^\"]+/p\d+)\")"),
          QRegularExpression(R"(price[^0-9]*([0-9]+\.[0-9]{2}))")},
+        {"Ottos Warenposten",
+         "https://www.ottos.ch/de/search?search=%1",
+         QRegularExpression(R"(href=\"([^\"]+/p/\d+)\")"),
+         QRegularExpression(R"(price[^0-9]*([0-9]+\.[0-9]{2}))")},
     };
 
     if (m_db) {
@@ -63,6 +67,7 @@ void PriceFetcher::fetchDailyPrices()
                               "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                               "AppleWebKit/537.36 (KHTML, like Gecko) "
                               "Chrome/120.0 Safari/537.36");
+            request.setRawHeader("Accept-Language", "de-CH,de;q=0.9,en;q=0.8");
             QNetworkReply *reply = m_manager.get(request);
             reply->setProperty("store", info.store);
             reply->setProperty("item", item);
@@ -125,6 +130,7 @@ void PriceFetcher::onReply(QNetworkReply *reply)
         }
         reply->deleteLater();
         return;
+
     } else {
         const QByteArray data = reply->readAll();
         QString pattern = reply->property("regex").toString();
@@ -154,6 +160,7 @@ void PriceFetcher::onReply(QNetworkReply *reply)
                           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                           "AppleWebKit/537.36 (KHTML, like Gecko) "
                           "Chrome/120.0 Safari/537.36");
+            req.setRawHeader("Accept-Language", "de-CH,de;q=0.9,en;q=0.8");
             QNetworkReply *nr = m_manager.get(req);
             nr->setProperty("store", entry.store);
             nr->setProperty("item", entry.item);
@@ -167,6 +174,7 @@ void PriceFetcher::onReply(QNetworkReply *reply)
                               "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                               "AppleWebKit/537.36 (KHTML, like Gecko) "
                               "Chrome/120.0 Safari/537.36");
+                req.setRawHeader("Accept-Language", "de-CH,de;q=0.9,en;q=0.8");
                 QNetworkReply *nr = m_manager.get(req);
                 nr->setProperty("store", entry.store);
                 nr->setProperty("item", entry.item);
