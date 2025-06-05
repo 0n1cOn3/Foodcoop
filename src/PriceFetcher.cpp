@@ -15,6 +15,7 @@ PriceFetcher::PriceFetcher(DatabaseManager *db, QObject *parent)
     // then scrape its price.
     m_stores = {
         {"Coop",
+         "https://www.coop.ch/de/search/?text=%1",
          "https://www.coop.ch/en/search/?text=%1",
          QRegularExpression(R"(href=\"([^\"]+/p/\d+)\")"),
          QRegularExpression(R"(price[^0-9]*([0-9]+\.[0-9]{2}))")},
@@ -113,6 +114,27 @@ void PriceFetcher::onReply(QNetworkReply *reply)
     entry.date = QDate::currentDate();
     entry.price = 0.0;
     entry.currency = QStringLiteral("CHF");
+
+    IssueEntry issue;
+    issue.store = entry.store;
+    issue.item = entry.item;
+    issue.date = entry.date;
+
+    if (reply->error() != QNetworkReply::NoError) {
+        issue.error = reply->errorString();
+        emit issueOccurred(issue);
+        if (--m_pending == 0) {
+            emit progressChanged(m_total - m_pending, m_total);
+            emit fetchFinished();
+        } else {
+            emit progressChanged(m_total - m_pending, m_total);
+        }
+        reply->deleteLater();
+        return;
+    }
+
+    QByteArray data = reply->readAll();
+    RequestStage stage = static_cast<RequestStage>(reply->property("stage").toInt());
 
     IssueEntry issue;
     issue.store = entry.store;

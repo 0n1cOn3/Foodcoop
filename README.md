@@ -27,10 +27,12 @@ Run the application with `./Foodcoop`.
 On the very first start the program shows a small progress dialog while it
 scrapes every configured store. A cancel button allows aborting the initial
 scrape and a toggle button reveals a debug log of the scraping process. The
-
 main window only appears once each store has produced at least one price entry. On
 later runs prices are fetched silently in the background.
 
 New products can be added through the text field on the left side menu. The app
 will store the product URL for each store and automatically keep it updated when
 it changes.
+
+Any errors encountered while scraping are saved in an `issues` table and shown
+in the **Issues** tab so you can inspect problems with individual requests.

@@ -4,6 +4,9 @@
 #include "PlotWindow.h"
 #include "FirstRunDialog.h"
 #include <QEventLoop>
+#include <QMessageBox>
+
+static bool performFirstScrape(PriceFetcher &fetcher, DatabaseManager &db, const QStringList &stores)
 
 static bool performFirstScrape(PriceFetcher &fetcher, DatabaseManager &db, const QStringList &stores)
 static bool performFirstScrape(PriceFetcher &fetcher, DatabaseManager &db)
@@ -17,6 +20,11 @@ static bool performFirstScrape(PriceFetcher &fetcher, DatabaseManager &db)
                      &dialog, &FirstRunDialog::onFetchStarted);
 
     bool canceled = false;
+    QObject::connect(&dialog, &FirstRunDialog::canceled, [&]() { canceled = true; });
+    dialog.show();
+
+    bool firstAttempt = true;
+    while (!db.hasPricesForAllStores(stores) && !canceled) {
     QObject::connect(&dialog, &FirstRunDialog::canceled, [&](){ canceled = true; });
     dialog.show();
     while (!db.hasPricesForAllStores(stores) && !canceled) {
@@ -26,6 +34,16 @@ static bool performFirstScrape(PriceFetcher &fetcher, DatabaseManager &db)
                          &loop, &QEventLoop::quit);
         fetcher.fetchDailyPrices();
         loop.exec();
+
+        if (firstAttempt) {
+            firstAttempt = false;
+            if (!db.hasPrices()) {
+                QMessageBox::warning(&dialog, QObject::tr("No Data"),
+                                     QObject::tr("None of the stores returned any data. "
+                                                 "The application cannot continue."));
+                canceled = true;
+            }
+        }
     }
 
     dialog.hide();
