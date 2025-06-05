@@ -2,10 +2,15 @@
 #include <QObject>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QSslError>
 #include <QList>
 #include <QUrl>
 #include <QRegularExpression>
 #include <QDate>
+#include <QWebEnginePage>
+#include <QWebEngineHttpRequest>
+#include <QWebEngineCertificateError>
+#include <QQueue>
 
 struct PriceEntry {
     QString store;
@@ -44,6 +49,8 @@ signals:
 
 private slots:
     void onReply(QNetworkReply *reply);
+    void onBrowserLoadFinished(bool ok);
+    void onBrowserHtmlReady(const QString &html);
 
 private:
     enum class RequestStage { Search, Product };
@@ -61,4 +68,22 @@ private:
     int m_total = 0;
     QNetworkAccessManager m_manager;
     DatabaseManager *m_db = nullptr;
+
+    struct BrowserRequest {
+        QUrl url;
+        QString store;
+        QString item;
+        QString priceRegex;
+        QString productRegex;
+        RequestStage stage;
+        QString searchUrl;
+    };
+
+    QWebEnginePage m_page;
+    QQueue<BrowserRequest> m_browserQueue;
+    BrowserRequest m_currentRequest;
+    bool m_browserBusy = false;
+
+    void enqueueBrowserRequest(const BrowserRequest &req);
+    void startNextBrowserRequest();
 };

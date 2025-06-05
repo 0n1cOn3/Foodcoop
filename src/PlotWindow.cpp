@@ -76,7 +76,6 @@ PlotWindow::PlotWindow(DatabaseManager *db, QWidget *parent)
 
     dockLayout->addWidget(new QLabel(tr("Category:"), dockWidget));
     m_categoryCombo = new QComboBox(dockWidget);
-    m_categoryCombo->addItems({"Milk"});
     dockLayout->addWidget(m_categoryCombo);
     connect(m_categoryCombo, &QComboBox::currentTextChanged, this, &PlotWindow::onCategoryChanged);
 

@@ -6,7 +6,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Network Sql Charts)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Network Sql Charts WebEngineCore WebEngineQuick)
 
 add_executable(Foodcoop
     src/main.cpp
@@ -22,6 +22,25 @@ target_link_libraries(Foodcoop PRIVATE
     Qt6::Network
     Qt6::Sql
     Qt6::Charts
+    Qt6::WebEngineCore
+    Qt6::WebEngineQuick
 )
 
 install(TARGETS Foodcoop DESTINATION bin)
+
+add_executable(fetch_test
+    fetch_test.cpp
+    src/PriceFetcher.cpp
+    src/DatabaseManager.cpp
+)
+
+target_include_directories(fetch_test PRIVATE src)
+
+target_link_libraries(fetch_test PRIVATE
+    Qt6::Network
+    Qt6::Sql
+    Qt6::WebEngineCore
+    Qt6::WebEngineQuick
+)
+
+install(TARGETS fetch_test DESTINATION bin)
