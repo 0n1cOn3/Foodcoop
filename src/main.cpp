@@ -14,8 +14,14 @@ int main(int argc, char *argv[])
     w.show();
 
     PriceFetcher fetcher;
+    w.setStoreList(fetcher.storeList());
+    w.setCategoryList(fetcher.categoryList());
     QObject::connect(&fetcher, &PriceFetcher::priceFetched,
                      [&db](const PriceEntry &entry){ db.insertPrice(entry); });
+    QObject::connect(&fetcher, &PriceFetcher::fetchStarted,
+                     &w, &PlotWindow::onFetchStarted);
+    QObject::connect(&fetcher, &PriceFetcher::fetchFinished,
+                     &w, &PlotWindow::onFetchFinished);
     fetcher.fetchDailyPrices();
 
     return app.exec();

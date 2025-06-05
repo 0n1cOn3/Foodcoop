@@ -35,6 +35,7 @@ PriceFetcher::PriceFetcher(QObject *parent)
 void PriceFetcher::fetchDailyPrices()
 {
     m_pending = m_products.size();
+    emit fetchStarted();
     for (const StoreProduct &p : m_products) {
         QNetworkRequest request(QUrl(p.url));
         request.setHeader(QNetworkRequest::UserAgentHeader,
@@ -45,6 +46,26 @@ void PriceFetcher::fetchDailyPrices()
         reply->setProperty("item", p.item);
         reply->setProperty("regex", p.priceRegex.pattern());
     }
+}
+
+QStringList PriceFetcher::storeList() const
+{
+    QStringList list;
+    for (const StoreProduct &p : m_products) {
+        if (!list.contains(p.store))
+            list.append(p.store);
+    }
+    return list;
+}
+
+QStringList PriceFetcher::categoryList() const
+{
+    QStringList list;
+    for (const StoreProduct &p : m_products) {
+        if (!list.contains(p.item))
+            list.append(p.item);
+    }
+    return list;
 }
 
 void PriceFetcher::onReply(QNetworkReply *reply)

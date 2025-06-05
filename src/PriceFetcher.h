@@ -19,10 +19,13 @@ class PriceFetcher : public QObject
 public:
     explicit PriceFetcher(QObject *parent = nullptr);
     void fetchDailyPrices();
+    QStringList storeList() const;
+    QStringList categoryList() const;
 
 signals:
     void priceFetched(const PriceEntry &entry);
     void fetchFinished();
+    void fetchStarted();
 
 private slots:
     void onReply(QNetworkReply *reply);
