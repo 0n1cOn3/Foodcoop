@@ -68,6 +68,8 @@ int main(int argc, char *argv[])
     }
 
     w.show();
+    if (!db.hasPrices())
+        fetcher.fetchDailyPrices();
 
     return app.exec();
 }

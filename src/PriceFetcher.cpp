@@ -125,6 +125,18 @@ void PriceFetcher::onReply(QNetworkReply *reply)
         }
         reply->deleteLater();
         return;
+    } else {
+        const QByteArray data = reply->readAll();
+        QString pattern = reply->property("regex").toString();
+        QRegularExpression regex(pattern);
+        QRegularExpressionMatch match = regex.match(QString::fromUtf8(data));
+        if (match.hasMatch()) {
+            entry.price = match.captured(1).toDouble();
+            emit priceFetched(entry);
+        } else {
+            issue.error = QStringLiteral("Price not found");
+            emit issueOccurred(issue);
+        }
     }
 
     QByteArray data = reply->readAll();
