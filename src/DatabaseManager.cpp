@@ -13,6 +13,7 @@ bool DatabaseManager::open(const QString &path)
 {
     m_db = QSqlDatabase::addDatabase("QSQLITE");
     m_db.setDatabaseName(path);
+    m_dbPath = path;
     if (!m_db.open()) {
         qWarning() << "Failed to open database" << m_db.lastError();
         return false;
@@ -20,6 +21,11 @@ bool DatabaseManager::open(const QString &path)
     QSqlQuery query;
     query.exec("CREATE TABLE IF NOT EXISTS prices (store TEXT, item TEXT, date TEXT, price REAL)");
     return true;
+}
+
+QString DatabaseManager::databasePath() const
+{
+    return m_dbPath;
 }
 
 void DatabaseManager::insertPrice(const PriceEntry &entry)
@@ -35,12 +41,22 @@ void DatabaseManager::insertPrice(const PriceEntry &entry)
     }
 }
 
-QList<PriceEntry> DatabaseManager::loadPrices(const QString &item) const
+QList<PriceEntry> DatabaseManager::loadPrices(const QString &item, const QString &store, const QDate &fromDate) const
 {
     QList<PriceEntry> list;
     QSqlQuery query;
-    query.prepare("SELECT store, item, date, price FROM prices WHERE item = ? ORDER BY date");
+    QString sql = "SELECT store, item, date, price FROM prices WHERE item = ?";
+    if (!store.isEmpty())
+        sql += " AND store = ?";
+    if (fromDate.isValid())
+        sql += " AND date >= ?";
+    sql += " ORDER BY date";
+    query.prepare(sql);
     query.addBindValue(item);
+    if (!store.isEmpty())
+        query.addBindValue(store);
+    if (fromDate.isValid())
+        query.addBindValue(fromDate.toString(Qt::ISODate));
     if (query.exec()) {
         while (query.next()) {
             PriceEntry entry;
@@ -52,4 +68,20 @@ QList<PriceEntry> DatabaseManager::loadPrices(const QString &item) const
         }
     }
     return list;
+}
+
+PriceEntry DatabaseManager::latestPrice(const QString &item, const QString &store) const
+{
+    PriceEntry entry;
+    QSqlQuery query;
+    query.prepare("SELECT store, item, date, price FROM prices WHERE item = ? AND store = ? ORDER BY date DESC LIMIT 1");
+    query.addBindValue(item);
+    query.addBindValue(store);
+    if (query.exec() && query.next()) {
+        entry.store = query.value(0).toString();
+        entry.item = query.value(1).toString();
+        entry.date = QDate::fromString(query.value(2).toString(), Qt::ISODate);
+        entry.price = query.value(3).toDouble();
+    }
+    return entry;
 }
