@@ -29,7 +29,9 @@ public slots:
     void onCategoryChanged(const QString &category);
     void onFetchStarted();
     void onFetchFinished();
+    void onIssueOccurred(const IssueEntry &issue);
     void onFromDateChanged(const QDate &date);
+    void updateIssues();
 
 private:
     DatabaseManager *m_db;
@@ -37,6 +39,7 @@ private:
     QChartView *m_chartView;
     QLineSeries *m_series;
     QTableWidget *m_table;
+    QTableWidget *m_issueTable;
     QTabWidget *m_tabs;
     QTimer *m_timer;
     QDockWidget *m_menuDock;

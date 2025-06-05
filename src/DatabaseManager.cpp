@@ -20,6 +20,7 @@ bool DatabaseManager::open(const QString &path)
     }
     QSqlQuery query;
     query.exec("CREATE TABLE IF NOT EXISTS prices (store TEXT, item TEXT, date TEXT, price REAL)");
+    query.exec("CREATE TABLE IF NOT EXISTS issues (store TEXT, item TEXT, date TEXT, error TEXT)");
     return true;
 }
 
@@ -38,6 +39,19 @@ void DatabaseManager::insertPrice(const PriceEntry &entry)
     query.addBindValue(entry.price);
     if (!query.exec()) {
         qWarning() << "Insert failed" << query.lastError();
+    }
+}
+
+void DatabaseManager::insertIssue(const IssueEntry &issue)
+{
+    QSqlQuery query;
+    query.prepare("INSERT INTO issues (store, item, date, error) VALUES (?, ?, ?, ?)");
+    query.addBindValue(issue.store);
+    query.addBindValue(issue.item);
+    query.addBindValue(issue.date.toString(Qt::ISODate));
+    query.addBindValue(issue.error);
+    if (!query.exec()) {
+        qWarning() << "Insert issue failed" << query.lastError();
     }
 }
 
@@ -70,6 +84,21 @@ QList<PriceEntry> DatabaseManager::loadPrices(const QString &item, const QString
     return list;
 }
 
+QList<IssueEntry> DatabaseManager::loadIssues() const
+{
+    QList<IssueEntry> list;
+    QSqlQuery query("SELECT store, item, date, error FROM issues ORDER BY date DESC");
+    while (query.next()) {
+        IssueEntry issue;
+        issue.store = query.value(0).toString();
+        issue.item = query.value(1).toString();
+        issue.date = QDate::fromString(query.value(2).toString(), Qt::ISODate);
+        issue.error = query.value(3).toString();
+        list.append(issue);
+    }
+    return list;
+}
+
 PriceEntry DatabaseManager::latestPrice(const QString &item, const QString &store) const
 {
     PriceEntry entry;
@@ -84,4 +113,12 @@ PriceEntry DatabaseManager::latestPrice(const QString &item, const QString &stor
         entry.price = query.value(3).toDouble();
     }
     return entry;
+}
+
+bool DatabaseManager::hasPrices() const
+{
+    QSqlQuery query("SELECT COUNT(*) FROM prices");
+    if (query.next())
+        return query.value(0).toInt() > 0;
+    return false;
 }

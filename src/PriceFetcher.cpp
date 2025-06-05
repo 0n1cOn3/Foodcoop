@@ -76,14 +76,27 @@ void PriceFetcher::onReply(QNetworkReply *reply)
     entry.date = QDate::currentDate();
     entry.price = 0.0;
 
-    const QByteArray data = reply->readAll();
-    QString pattern = reply->property("regex").toString();
-    QRegularExpression regex(pattern);
-    QRegularExpressionMatch match = regex.match(QString::fromUtf8(data));
-    if (match.hasMatch())
-        entry.price = match.captured(1).toDouble();
+    IssueEntry issue;
+    issue.store = entry.store;
+    issue.item = entry.item;
+    issue.date = entry.date;
 
-    emit priceFetched(entry);
+    if (reply->error() != QNetworkReply::NoError) {
+        issue.error = reply->errorString();
+        emit issueOccurred(issue);
+    } else {
+        const QByteArray data = reply->readAll();
+        QString pattern = reply->property("regex").toString();
+        QRegularExpression regex(pattern);
+        QRegularExpressionMatch match = regex.match(QString::fromUtf8(data));
+        if (match.hasMatch()) {
+            entry.price = match.captured(1).toDouble();
+            emit priceFetched(entry);
+        } else {
+            issue.error = QStringLiteral("Price not found");
+            emit issueOccurred(issue);
+        }
+    }
 
     if (--m_pending == 0)
         emit fetchFinished();
