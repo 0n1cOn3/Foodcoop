@@ -6,6 +6,8 @@
 #include "DatabaseManager.h"
 #include "PlotWindow.h"
 #include "FirstRunDialog.h"
+#include <QTranslator>
+#include <QSettings>
 #include <QEventLoop>
 #include <QMessageBox>
 
@@ -57,6 +59,13 @@ int main(int argc, char *argv[])
 #endif
     QApplication app(argc, argv);
     QApplication::setApplicationName("Foodcoop");
+    QApplication::setApplicationVersion(QStringLiteral(APP_VERSION));
+    QCoreApplication::setOrganizationName("Foodcoop");
+    QSettings settings;
+    QString language = settings.value("language", QStringLiteral("en")).toString();
+    QTranslator translator;
+    translator.load(QStringLiteral(":/i18n/foodcoop_%1.qm").arg(language));
+    app.installTranslator(&translator);
 
     DatabaseManager db;
     db.open("prices.db");
@@ -64,9 +73,11 @@ int main(int argc, char *argv[])
     PlotWindow w(&db);
 
     PriceFetcher fetcher(&db);
-    const QByteArray off = qgetenv("OFFLINE_PATH");
-    if (!off.isEmpty())
-        fetcher.setOfflinePath(QString::fromLocal8Bit(off));
+    QString offline = QString::fromLocal8Bit(qgetenv("OFFLINE_PATH"));
+    if (offline.isEmpty())
+        offline = settings.value("offlinePath").toString();
+    if (!offline.isEmpty())
+        fetcher.setOfflinePath(offline);
     w.setStoreList(fetcher.storeList());
     w.setCategoryList(fetcher.categoryList());
     QObject::connect(&fetcher, &PriceFetcher::priceFetched,
@@ -87,6 +98,13 @@ int main(int argc, char *argv[])
                          w.setCategoryList(fetcher.categoryList());
                          w.updateChart();
                      });
+    QObject::connect(&w, &PlotWindow::offlinePathChanged, &fetcher, &PriceFetcher::setOfflinePath);
+    QObject::connect(&w, &PlotWindow::languageChanged, [&](const QString &lang){
+        translator.load(QStringLiteral(":/i18n/foodcoop_%1.qm").arg(lang));
+        app.installTranslator(&translator);
+        settings.setValue("language", lang);
+        w.retranslateUi();
+    });
     if (!db.hasPrices()) {
         if (!performFirstScrape(fetcher, db))
             return 0;

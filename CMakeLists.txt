@@ -6,7 +6,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Network Sql Charts)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Network Sql Charts LinguistTools)
 find_package(Qt6 QUIET COMPONENTS WebEngineCore WebEngineQuick)
 
 if(TARGET Qt6::WebEngineCore AND TARGET Qt6::WebEngineQuick)
@@ -22,6 +22,7 @@ add_executable(Foodcoop
     src/TrendDetector.cpp
     src/PlotWindow.cpp
     src/FirstRunDialog.cpp
+    src/SettingsDialog.cpp
 )
 
 target_link_libraries(Foodcoop PRIVATE
@@ -33,9 +34,17 @@ target_link_libraries(Foodcoop PRIVATE
 if(HAVE_WEBENGINE)
     target_link_libraries(Foodcoop PRIVATE Qt6::WebEngineCore Qt6::WebEngineQuick)
 endif()
-target_compile_definitions(Foodcoop PRIVATE HAVE_WEBENGINE=$<BOOL:${HAVE_WEBENGINE}>)
+target_compile_definitions(Foodcoop PRIVATE HAVE_WEBENGINE=$<BOOL:${HAVE_WEBENGINE}> APP_VERSION="${PROJECT_VERSION}")
 
 install(TARGETS Foodcoop DESTINATION bin)
+
+qt_add_translations(Foodcoop
+    TS_FILES
+        translations/foodcoop_en.ts
+        translations/foodcoop_de.ts
+        translations/foodcoop_fr.ts
+        translations/foodcoop_it.ts
+)
 
 if(HAVE_WEBENGINE)
     add_executable(fetch_test
