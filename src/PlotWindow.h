@@ -12,6 +12,7 @@
 #include <QTableWidget>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QMenuBar>
 
 QT_BEGIN_NAMESPACE
 class QTimer;
@@ -35,9 +36,13 @@ public slots:
     void onFromDateChanged(const QDate &date);
     void updateIssues();
     void showFullLog();
+    void openSettings();
+    void retranslateUi();
 
 signals:
     void addItemRequested(const QString &item);
+    void offlinePathChanged(const QString &path);
+    void languageChanged(const QString &lang);
 
 private:
     DatabaseManager *m_db;

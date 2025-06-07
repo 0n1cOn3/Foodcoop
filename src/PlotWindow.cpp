@@ -17,6 +17,10 @@
 #include <QHBoxLayout>
 #include <QDialog>
 #include <QPlainTextEdit>
+#include <QCoreApplication>
+#include <QMenuBar>
+#include <QSettings>
+#include "SettingsDialog.h"
 
 PlotWindow::PlotWindow(DatabaseManager *db, QWidget *parent)
     : QMainWindow(parent), m_db(db)
@@ -48,6 +52,7 @@ PlotWindow::PlotWindow(DatabaseManager *db, QWidget *parent)
     m_tabs->addTab(m_table, tr("Table"));
     m_tabs->addTab(issueTab, tr("Issues"));
     setCentralWidget(m_tabs);
+    menuBar()->addAction(tr("Settings"), this, &PlotWindow::openSettings);
 
     // Create user menu dock
     m_menuDock = new QDockWidget(tr("Menu"), this);
@@ -235,4 +240,28 @@ void PlotWindow::showFullLog()
     dialog.setLayout(layout);
     dialog.resize(500, 400);
     dialog.exec();
+}
+
+void PlotWindow::openSettings()
+{
+    QSettings settings;
+    SettingsDialog dlg(QCoreApplication::applicationVersion(), this);
+    dlg.setOfflinePath(settings.value("offlinePath").toString());
+    dlg.setLanguage(settings.value("language", QStringLiteral("en")).toString());
+    if (dlg.exec() == QDialog::Accepted) {
+        settings.setValue("offlinePath", dlg.offlinePath());
+        settings.setValue("language", dlg.language());
+        emit offlinePathChanged(dlg.offlinePath());
+        emit languageChanged(dlg.language());
+    }
+}
+
+void PlotWindow::retranslateUi()
+{
+    m_menuDock->setWindowTitle(tr("Menu"));
+    m_showLogButton->setText(tr("Show Full Log"));
+    m_tabs->setTabText(0, tr("Chart"));
+    m_tabs->setTabText(1, tr("Table"));
+    m_tabs->setTabText(2, tr("Issues"));
+    updateDbInfo();
 }
