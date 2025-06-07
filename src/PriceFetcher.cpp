@@ -16,7 +16,6 @@ PriceFetcher::PriceFetcher(DatabaseManager *db, QObject *parent)
     m_stores = {
         {"Coop",
          "https://www.coop.ch/de/search/?text=%1",
-         "https://www.coop.ch/en/search/?text=%1",
          QRegularExpression(R"(href=\"([^\"]+/p/\d+)\")"),
          QRegularExpression(R"(price[^0-9]*([0-9]+\.[0-9]{2}))")},
         {"Migros",
@@ -131,40 +130,6 @@ void PriceFetcher::onReply(QNetworkReply *reply)
         }
         reply->deleteLater();
         return;
-    }
-
-    QByteArray data = reply->readAll();
-    RequestStage stage = static_cast<RequestStage>(reply->property("stage").toInt());
-
-    IssueEntry issue;
-    issue.store = entry.store;
-    issue.item = entry.item;
-    issue.date = entry.date;
-
-    if (reply->error() != QNetworkReply::NoError) {
-        issue.error = reply->errorString();
-        emit issueOccurred(issue);
-        if (--m_pending == 0) {
-            emit progressChanged(m_total - m_pending, m_total);
-            emit fetchFinished();
-        } else {
-            emit progressChanged(m_total - m_pending, m_total);
-        }
-        reply->deleteLater();
-        return;
-
-    } else {
-        const QByteArray data = reply->readAll();
-        QString pattern = reply->property("regex").toString();
-        QRegularExpression regex(pattern);
-        QRegularExpressionMatch match = regex.match(QString::fromUtf8(data));
-        if (match.hasMatch()) {
-            entry.price = match.captured(1).toDouble();
-            emit priceFetched(entry);
-        } else {
-            issue.error = QStringLiteral("Price not found");
-            emit issueOccurred(issue);
-        }
     }
 
     QByteArray data = reply->readAll();

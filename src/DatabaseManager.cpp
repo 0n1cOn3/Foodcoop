@@ -22,8 +22,6 @@ bool DatabaseManager::open(const QString &path)
     query.exec("CREATE TABLE IF NOT EXISTS prices (store TEXT, item TEXT, date TEXT, price REAL, currency TEXT)");
     query.exec("CREATE TABLE IF NOT EXISTS issues (store TEXT, item TEXT, date TEXT, error TEXT)");
     query.exec("CREATE TABLE IF NOT EXISTS products (store TEXT, item TEXT, url TEXT, PRIMARY KEY(store, item))");
-    query.exec("CREATE TABLE IF NOT EXISTS prices (store TEXT, item TEXT, date TEXT, price REAL)");
-    query.exec("CREATE TABLE IF NOT EXISTS issues (store TEXT, item TEXT, date TEXT, error TEXT)");
     return true;
 }
 
