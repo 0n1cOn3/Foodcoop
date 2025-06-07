@@ -73,6 +73,8 @@ private:
     DatabaseManager *m_db = nullptr;
     QString m_offlinePath;
 
+    void scanOfflineFolder();
+
     struct BrowserRequest {
         QUrl url;
         QString store;

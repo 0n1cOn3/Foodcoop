@@ -22,6 +22,11 @@ for the store and item names inside the page title. A typical `page title •
 Store.html` created by Firefox will work. In this mode the pages are read from
 disk instead of downloaded.
 
+When you choose an offline folder in the application settings the program
+now scans all HTML files in that directory. Basic information such as the
+product name, price, country of origin and weight is extracted and printed
+to the console.
+
 ## Prerequisites
 
 Install the Qt6 development modules required to build the application. On

@@ -5,6 +5,8 @@
 #include <QUrl>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
+#include <QDebug>
 #if HAVE_WEBENGINE
 #  include <QWebEngineProfile>
 #  include <QWebEnginePage>
@@ -79,6 +81,7 @@ PriceFetcher::PriceFetcher(DatabaseManager *db, QObject *parent)
 void PriceFetcher::setOfflinePath(const QString &path)
 {
     m_offlinePath = path;
+    scanOfflineFolder();
 }
 
 void PriceFetcher::fetchDailyPrices()
@@ -468,3 +471,58 @@ void PriceFetcher::onBrowserHtmlReady(const QString &)
 {
 }
 #endif
+
+void PriceFetcher::scanOfflineFolder()
+{
+    if (m_offlinePath.isEmpty())
+        return;
+
+    QDir dir(m_offlinePath);
+    const QStringList files = dir.entryList(QStringList() << "*.html" << "*.htm", QDir::Files);
+    for (const QString &fileName : files) {
+        QString path = dir.filePath(fileName);
+        QFile file(path);
+        if (!file.open(QIODevice::ReadOnly))
+            continue;
+
+        QString html = QString::fromUtf8(file.readAll());
+        QString slugName = slugify(QFileInfo(fileName).completeBaseName());
+
+        const StoreInfo *storeInfo = nullptr;
+        for (const StoreInfo &info : m_stores) {
+            QString slugStore = slugify(info.store);
+            if (slugName.contains(slugStore) || html.contains(info.store, Qt::CaseInsensitive)) {
+                storeInfo = &info;
+                break;
+            }
+        }
+        if (!storeInfo)
+            continue;
+
+        QString product;
+        QRegularExpression titleRe(QStringLiteral("<title>([^<]+)</title>"), QRegularExpression::CaseInsensitiveOption);
+        QRegularExpressionMatch tm = titleRe.match(html);
+        if (tm.hasMatch()) {
+            product = tm.captured(1).split(QRegularExpression("[\u2022|\-]")).first().trimmed();
+        }
+
+        double price = 0.0;
+        QRegularExpression priceRe(storeInfo->priceRegex);
+        QRegularExpressionMatch pm = priceRe.match(html);
+        if (pm.hasMatch())
+            price = pm.captured(1).toDouble();
+
+        QRegularExpression countryRe(QStringLiteral("(?:Herkunft|Origin|Country)[^<:]*:?\\s*([^<\n]+)"), QRegularExpression::CaseInsensitiveOption);
+        QRegularExpressionMatch cm = countryRe.match(html);
+        QString country = cm.hasMatch() ? cm.captured(1).trimmed() : QString();
+
+        QRegularExpression weightRe(QStringLiteral("([0-9]+(?:,[0-9]+)?\\s*(?:g|kg|ml|l))"), QRegularExpression::CaseInsensitiveOption);
+        QRegularExpressionMatch wm = weightRe.match(html);
+        QString weight = wm.hasMatch() ? wm.captured(1).trimmed() : QString();
+
+        qInfo() << "Scanned" << fileName << "store:" << storeInfo->store
+                << "item:" << product << "price:" << price
+                << "country:" << country << "weight:" << weight;
+    }
+}
+
