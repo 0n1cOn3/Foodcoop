@@ -141,7 +141,19 @@ void PriceFetcher::onReply(QNetworkReply *reply)
     issue.date = entry.date;
 
     if (reply->error() != QNetworkReply::NoError) {
-        issue.error = reply->errorString();
+        QVariant status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
+        QString errorText;
+        if (status.isValid())
+            errorText = QString::number(status.toInt()) + QLatin1Char(' ');
+        errorText += reply->errorString();
+
+        QByteArray snippet = reply->read(200);
+        if (!snippet.isEmpty()) {
+            errorText += QLatin1String(" | ");
+            errorText += QString::fromUtf8(snippet);
+        }
+
+        issue.error = errorText;
         emit issueOccurred(issue);
         if (--m_pending == 0) {
             emit progressChanged(m_total - m_pending, m_total);
