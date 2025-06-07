@@ -5,13 +5,15 @@ stores them in a SQLite database and plots the price history. A simple trend
 detection is performed using linear regression on the stored prices.
 
 The `PriceFetcher` class mimics a desktop browser when scraping the Swiss stores
-(Coop, Migros, Denner, Aldi Suisse, Lidl Suisse and Ottos Warenposten). Product links are resolved
+(Coop, Migros, Denner, Aldi Suisse, Lidl Suisse and Ottos Warenposten). When a site requires JavaScript, a headless QtWebEngine page is used automatically. Product links are resolved
 dynamically by searching the site before fetching the product page. The resolved
 URL is stored in the SQLite database so the application can detect when a store
 moves a product and update the saved link automatically. The scraping code is
 intentionally simple and may require adjustments when the page markup changes.
 Requests include an `Accept-Language` header for Swiss German (`de-CH`) so
-search results match the German product names.
+search results match the German product names. If Qt WebEngine is not
+available the application still builds, but any pages that require JavaScript
+will fail to load and an issue is recorded.
 
 ## Building
 
