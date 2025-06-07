@@ -1,4 +1,5 @@
 #include <QApplication>
+#include <QtWebEngineQuick/qtwebenginequickglobal.h>
 #include "PriceFetcher.h"
 #include "DatabaseManager.h"
 #include "PlotWindow.h"
@@ -6,8 +7,10 @@
 #include <QEventLoop>
 #include <QMessageBox>
 
-static bool performFirstScrape(PriceFetcher &fetcher, DatabaseManager &db, const QStringList &stores)
+static bool performFirstScrape(PriceFetcher &fetcher, DatabaseManager &db)
 {
+    if (fetcher.categoryList().isEmpty())
+        return true;
     FirstRunDialog dialog;
     QObject::connect(&fetcher, &PriceFetcher::progressChanged,
                      &dialog, &FirstRunDialog::onProgress);
@@ -21,7 +24,7 @@ static bool performFirstScrape(PriceFetcher &fetcher, DatabaseManager &db, const
     dialog.show();
 
     bool firstAttempt = true;
-    while (!db.hasPricesForAllStores(stores) && !canceled) {
+    while (!db.hasPrices() && !canceled) {
         QEventLoop loop;
         QObject::connect(&fetcher, &PriceFetcher::fetchFinished,
                          &loop, &QEventLoop::quit);
@@ -40,11 +43,14 @@ static bool performFirstScrape(PriceFetcher &fetcher, DatabaseManager &db, const
     }
 
     dialog.hide();
-    return db.hasPricesForAllStores(stores) && !canceled;
+    return db.hasPrices() && !canceled;
 }
 
 int main(int argc, char *argv[])
 {
+    qputenv("QTWEBENGINE_DISABLE_SANDBOX", QByteArray("1"));
+    QtWebEngineQuick::initialize();
+    QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
     QApplication app(argc, argv);
     QApplication::setApplicationName("Foodcoop");
 
@@ -57,9 +63,9 @@ int main(int argc, char *argv[])
     w.setStoreList(fetcher.storeList());
     w.setCategoryList(fetcher.categoryList());
     QObject::connect(&fetcher, &PriceFetcher::priceFetched,
-                     [&db](const PriceEntry &entry){ db.insertPrice(entry); });
+                     [&db](const PriceEntry &entry) { db.insertPrice(entry); });
     QObject::connect(&fetcher, &PriceFetcher::issueOccurred,
-                     [&db, &w](const IssueEntry &issue){
+                     [&db, &w](const IssueEntry &issue) {
                          db.insertIssue(issue);
                          w.onIssueOccurred(issue);
                      });
@@ -74,14 +80,13 @@ int main(int argc, char *argv[])
                          w.setCategoryList(fetcher.categoryList());
                          w.updateChart();
                      });
-    QStringList stores = fetcher.storeList();
-    if (!db.hasPricesForAllStores(stores)) {
-        if (!performFirstScrape(fetcher, db, stores))
+    if (!db.hasPrices()) {
+        if (!performFirstScrape(fetcher, db))
             return 0;
     }
 
     w.show();
-    if (!db.hasPrices())
+    if (!db.hasPrices() && !fetcher.categoryList().isEmpty())
         fetcher.fetchDailyPrices();
 
     return app.exec();
