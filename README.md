@@ -11,7 +11,9 @@ URL is stored in the SQLite database so the application can detect when a store
 moves a product and update the saved link automatically. The scraping code is
 intentionally simple and may require adjustments when the page markup changes.
 Requests include an `Accept-Language` header for Swiss German (`de-CH`) so
-search results match the German product names.
+search results match the German product names. If Qt WebEngine is not
+available the application still builds, but any pages that require JavaScript
+will fail to load and an issue is recorded.
 
 ## Building
 

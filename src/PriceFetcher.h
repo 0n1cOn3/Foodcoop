@@ -7,10 +7,12 @@
 #include <QUrl>
 #include <QRegularExpression>
 #include <QDate>
-#include <QWebEnginePage>
-#include <QWebEngineHttpRequest>
-#include <QWebEngineCertificateError>
-#include <QQueue>
+#if HAVE_WEBENGINE
+#  include <QWebEnginePage>
+#  include <QWebEngineHttpRequest>
+#  include <QWebEngineCertificateError>
+#  include <QQueue>
+#endif
 
 struct PriceEntry {
     QString store;
@@ -79,10 +81,12 @@ private:
         QString searchUrl;
     };
 
+#if HAVE_WEBENGINE
     QWebEnginePage m_page;
     QQueue<BrowserRequest> m_browserQueue;
     BrowserRequest m_currentRequest;
     bool m_browserBusy = false;
+#endif
 
     void enqueueBrowserRequest(const BrowserRequest &req);
     void startNextBrowserRequest();

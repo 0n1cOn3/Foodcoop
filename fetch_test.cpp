@@ -1,15 +1,19 @@
 #include <QGuiApplication>
-#include <QtWebEngineQuick/qtwebenginequickglobal.h>
+#if HAVE_WEBENGINE
+#  include <QtWebEngineQuick/qtwebenginequickglobal.h>
+#endif
 #include "DatabaseManager.h"
 #include "PriceFetcher.h"
 
 int main(int argc, char **argv)
 {
     qputenv("QT_QPA_PLATFORM", QByteArray("offscreen"));
+#if HAVE_WEBENGINE
     qputenv("QTWEBENGINE_DISABLE_SANDBOX", QByteArray("1"));
     qputenv("QT_OPENGL", QByteArray("software"));
     QtWebEngineQuick::initialize();
     QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
+#endif
     QGuiApplication app(argc, argv);
 
     DatabaseManager db;

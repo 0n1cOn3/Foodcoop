@@ -3,10 +3,11 @@
 #include <QRegularExpression>
 #include <QDate>
 #include <QUrl>
-#include <QWebEngineProfile>
-#include <QWebEnginePage>
-
-#include <QtWebEngineQuick/qtwebenginequickglobal.h>
+#if HAVE_WEBENGINE
+#  include <QWebEngineProfile>
+#  include <QWebEnginePage>
+#  include <QtWebEngineQuick/qtwebenginequickglobal.h>
+#endif
 
 PriceFetcher::PriceFetcher(DatabaseManager *db, QObject *parent)
     : QObject(parent), m_db(db)
@@ -17,12 +18,14 @@ PriceFetcher::PriceFetcher(DatabaseManager *db, QObject *parent)
             this, [](QNetworkReply *reply, const QList<QSslError> &) {
                 reply->ignoreSslErrors();
             });
+#if HAVE_WEBENGINE
     connect(&m_page, &QWebEnginePage::loadFinished,
             this, &PriceFetcher::onBrowserLoadFinished);
     connect(&m_page, &QWebEnginePage::certificateError,
             this, [](const QWebEngineCertificateError &) {
                 return true;
             });
+#endif
 
     // Configure stores and a generic product to track. The URLs are templates
     // for a search query. We will dynamically extract the first product link and
@@ -242,6 +245,7 @@ void PriceFetcher::onReply(QNetworkReply *reply)
     reply->deleteLater();
 }
 
+#if HAVE_WEBENGINE
 void PriceFetcher::enqueueBrowserRequest(const BrowserRequest &req)
 {
     m_browserQueue.enqueue(req);
@@ -346,3 +350,38 @@ void PriceFetcher::onBrowserHtmlReady(const QString &html)
         emit progressChanged(m_total - m_pending, m_total);
     }
 }
+
+#else
+void PriceFetcher::enqueueBrowserRequest(const BrowserRequest &req)
+{
+    IssueEntry issue;
+    issue.store = req.store;
+    issue.item = req.item;
+    issue.date = QDate::currentDate();
+    issue.error = QStringLiteral("Qt WebEngine unavailable");
+    emit issueOccurred(issue);
+    if (--m_pending == 0) {
+        emit progressChanged(m_total - m_pending, m_total);
+        emit fetchFinished();
+    } else {
+        emit progressChanged(m_total - m_pending, m_total);
+    }
+    Q_UNUSED(req);
+}
+
+void PriceFetcher::startNextBrowserRequest() {}
+
+void PriceFetcher::onBrowserLoadFinished(bool)
+{
+    if (--m_pending == 0) {
+        emit progressChanged(m_total - m_pending, m_total);
+        emit fetchFinished();
+    } else {
+        emit progressChanged(m_total - m_pending, m_total);
+    }
+}
+
+void PriceFetcher::onBrowserHtmlReady(const QString &)
+{
+}
+#endif

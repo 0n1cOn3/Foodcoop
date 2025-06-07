@@ -1,5 +1,7 @@
 #include <QApplication>
-#include <QtWebEngineQuick/qtwebenginequickglobal.h>
+#if HAVE_WEBENGINE
+#  include <QtWebEngineQuick/qtwebenginequickglobal.h>
+#endif
 #include "PriceFetcher.h"
 #include "DatabaseManager.h"
 #include "PlotWindow.h"
@@ -48,9 +50,11 @@ static bool performFirstScrape(PriceFetcher &fetcher, DatabaseManager &db)
 
 int main(int argc, char *argv[])
 {
+#if HAVE_WEBENGINE
     qputenv("QTWEBENGINE_DISABLE_SANDBOX", QByteArray("1"));
     QtWebEngineQuick::initialize();
     QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
+#endif
     QApplication app(argc, argv);
     QApplication::setApplicationName("Foodcoop");
 
