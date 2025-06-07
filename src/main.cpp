@@ -7,6 +7,7 @@
 #include <QMessageBox>
 
 static bool performFirstScrape(PriceFetcher &fetcher, DatabaseManager &db, const QStringList &stores)
+
 {
     FirstRunDialog dialog;
     QObject::connect(&fetcher, &PriceFetcher::progressChanged,
@@ -34,10 +35,12 @@ static bool performFirstScrape(PriceFetcher &fetcher, DatabaseManager &db, const
                 QMessageBox::warning(&dialog, QObject::tr("No Data"),
                                      QObject::tr("None of the stores returned any data. "
                                                  "The log will remain open for investigation."));
+                                                 "The application cannot continue."));
                 canceled = true;
             }
         }
     }
+
 
     bool success = db.hasPricesForAllStores(stores);
     if (success)
@@ -45,6 +48,11 @@ static bool performFirstScrape(PriceFetcher &fetcher, DatabaseManager &db, const
     else
         dialog.exec();
     return success && !canceled;
+
+    dialog.hide();
+    return db.hasPricesForAllStores(stores) && !canceled;
+    return db.hasPrices() && !canceled;
+
 }
 
 int main(int argc, char *argv[])
@@ -85,6 +93,8 @@ int main(int argc, char *argv[])
     }
 
     w.show();
+    if (!db.hasPrices())
+        fetcher.fetchDailyPrices();
 
     return app.exec();
 }
