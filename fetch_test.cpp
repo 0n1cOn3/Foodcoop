@@ -20,6 +20,9 @@ int main(int argc, char **argv)
     db.open("test.db");
 
     PriceFetcher fetcher(&db);
+    const QByteArray off = qgetenv("OFFLINE_PATH");
+    if (!off.isEmpty())
+        fetcher.setOfflinePath(QString::fromLocal8Bit(off));
     const QStringList args = app.arguments();
     for (int i = 1; i < args.size(); ++i)
         fetcher.addItem(args.at(i));

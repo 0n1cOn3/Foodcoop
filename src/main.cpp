@@ -64,6 +64,9 @@ int main(int argc, char *argv[])
     PlotWindow w(&db);
 
     PriceFetcher fetcher(&db);
+    const QByteArray off = qgetenv("OFFLINE_PATH");
+    if (!off.isEmpty())
+        fetcher.setOfflinePath(QString::fromLocal8Bit(off));
     w.setStoreList(fetcher.storeList());
     w.setCategoryList(fetcher.categoryList());
     QObject::connect(&fetcher, &PriceFetcher::priceFetched,

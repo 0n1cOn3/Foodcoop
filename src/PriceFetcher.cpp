@@ -3,11 +3,37 @@
 #include <QRegularExpression>
 #include <QDate>
 #include <QUrl>
+#include <QDir>
+#include <QFile>
 #if HAVE_WEBENGINE
 #  include <QWebEngineProfile>
 #  include <QWebEnginePage>
 #  include <QtWebEngineQuick/qtwebenginequickglobal.h>
 #endif
+
+static QString slugify(const QString &text)
+{
+    QString out = text.toLower();
+    out.replace(QRegularExpression("[^a-z0-9]+"), "_");
+    return out;
+}
+
+static QString findOfflineHtml(const QString &dirPath,
+                               const QString &store,
+                               const QString &item)
+{
+    QDir dir(dirPath);
+    QString slugStore = slugify(store);
+    QString slugItem = slugify(item);
+    const QStringList files = dir.entryList(QStringList() << "*.html",
+                                           QDir::Files);
+    for (const QString &file : files) {
+        QString slugName = slugify(QFileInfo(file).completeBaseName());
+        if (slugName.contains(slugStore) && slugName.contains(slugItem))
+            return dir.filePath(file);
+    }
+    return QString();
+}
 
 PriceFetcher::PriceFetcher(DatabaseManager *db, QObject *parent)
     : QObject(parent), m_db(db)
@@ -50,6 +76,11 @@ PriceFetcher::PriceFetcher(DatabaseManager *db, QObject *parent)
     }
 }
 
+void PriceFetcher::setOfflinePath(const QString &path)
+{
+    m_offlinePath = path;
+}
+
 void PriceFetcher::fetchDailyPrices()
 {
     m_total = m_stores.size() * m_items.size();
@@ -64,6 +95,46 @@ void PriceFetcher::fetchDailyPrices()
 
     for (const StoreInfo &info : m_stores) {
         for (const QString &item : m_items) {
+            if (!m_offlinePath.isEmpty()) {
+                QString path = findOfflineHtml(m_offlinePath, info.store, item);
+                QFile file(path);
+
+                PriceEntry entry;
+                entry.store = info.store;
+                entry.item = item;
+                entry.date = QDate::currentDate();
+                entry.price = 0.0;
+                entry.currency = QStringLiteral("CHF");
+
+                IssueEntry issue;
+                issue.store = entry.store;
+                issue.item = entry.item;
+                issue.date = entry.date;
+
+                if (file.open(QIODevice::ReadOnly)) {
+                    QString html = QString::fromUtf8(file.readAll());
+                    QRegularExpression regex(info.priceRegex);
+                    QRegularExpressionMatch match = regex.match(html);
+                    if (match.hasMatch()) {
+                        entry.price = match.captured(1).toDouble();
+                        emit priceFetched(entry);
+                    } else {
+                        issue.error = QStringLiteral("Price not found");
+                        emit issueOccurred(issue);
+                    }
+                } else {
+                    issue.error = QStringLiteral("Offline file not found");
+                    emit issueOccurred(issue);
+                }
+
+                if (--m_pending == 0) {
+                    emit progressChanged(m_total - m_pending, m_total);
+                    emit fetchFinished();
+                } else {
+                    emit progressChanged(m_total - m_pending, m_total);
+                }
+                continue;
+            }
             QString storedUrl = m_db ? m_db->productUrl(info.store, item) : QString();
             if (!storedUrl.isEmpty()) {
                 QNetworkRequest req{QUrl(storedUrl)};

@@ -36,6 +36,7 @@ class PriceFetcher : public QObject
     Q_OBJECT
 public:
     explicit PriceFetcher(DatabaseManager *db, QObject *parent = nullptr);
+    void setOfflinePath(const QString &path);
     void fetchDailyPrices();
     QStringList storeList() const;
     QStringList categoryList() const;
@@ -70,6 +71,7 @@ private:
     int m_total = 0;
     QNetworkAccessManager m_manager;
     DatabaseManager *m_db = nullptr;
+    QString m_offlinePath;
 
     struct BrowserRequest {
         QUrl url;

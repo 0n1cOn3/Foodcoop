@@ -15,6 +15,13 @@ search results match the German product names. If Qt WebEngine is not
 available the application still builds, but any pages that require JavaScript
 will fail to load and an issue is recorded.
 
+If you do not have network access, set the environment variable `OFFLINE_PATH`
+to a directory containing HTML files saved from Firefox. The filenames do not
+need to follow a strict pattern – the application matches files by searching
+for the store and item names inside the page title. A typical `page title •
+Store.html` created by Firefox will work. In this mode the pages are read from
+disk instead of downloaded.
+
 ## Prerequisites
 
 Install the Qt6 development modules required to build the application. On
