@@ -15,6 +15,19 @@ search results match the German product names. If Qt WebEngine is not
 available the application still builds, but any pages that require JavaScript
 will fail to load and an issue is recorded.
 
+## Prerequisites
+
+Install the Qt6 development modules required to build the application. On
+Debian or Ubuntu systems you can install them using `apt`:
+
+```bash
+sudo apt-get install qt6-base-dev qt6-webengine-dev \
+    qt6-charts-dev qt6-sql-dev
+```
+
+If you use another operating system, install the same packages with your
+distribution's package manager.
+
 ## Building
 
 ```
